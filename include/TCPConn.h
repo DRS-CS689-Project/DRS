@@ -3,6 +3,7 @@
 
 #include "FileDesc.h"
 #include "PasswdMgr.h"
+#include <boost/multiprecision/cpp_int.hpp>
 
 
 const int max_attempts = 2;
@@ -12,7 +13,7 @@ const int max_attempts = 2;
 class TCPConn 
 {
 public:
-   TCPConn(/* LogMgr &server_log*/);
+   TCPConn(boost::multiprecision::uint128_t number/* LogMgr &server_log*/);
    ~TCPConn();
 
    bool accept(SocketFD &server);
@@ -20,14 +21,8 @@ public:
    int sendText(const char *msg);
    int sendText(const char *msg, int size);
 
-   void handleConnection();
+   bool handleConnection();
    void startAuthentication();
-   void getUsername();
-   void getPasswd();
-   void sendMenu();
-   void getMenuChoice();
-   void setPassword();
-   void changePassword();
    
    bool getUserInput(std::string &cmd);
 
@@ -36,33 +31,38 @@ public:
 
    unsigned long getIPAddr() { return _connfd.getIPAddr(); };
    void getIPAddrStr(std::string &buf);
-   const char *getUsernameStr() { return _username.c_str(); };
 
    bool isNewIPAllowed(std::string inputIP);
 
-   void sendNumber();
 
-   void waitForDivisor();
+
+   bool getData(std::vector<uint8_t> &buf);
+   bool sendData(std::vector<uint8_t> &buf);
+   std::vector<uint8_t>::iterator findCmd(std::vector<uint8_t> &buf, std::vector<uint8_t> &cmd);
+   bool hasCmd(std::vector<uint8_t> &buf, std::vector<uint8_t> &cmd);
+   bool getCmdData(std::vector<uint8_t> &buf, std::vector<uint8_t> &startcmd, std::vector<uint8_t> &endcmd);
+   void wrapCmd(std::vector<uint8_t> &buf, std::vector<uint8_t> &startcmd, std::vector<uint8_t> &endcmd);
+
+   void sendNumber();
+   bool waitForDivisor();
+   void stopProcessing();
+
+   bool foundAllPrimeFactors = false;
 
    int dbNum = 0;
 private:
-   
+   boost::multiprecision::uint128_t number;
 
-   enum statustype { s_username, s_changepwd, s_confirmpwd, s_passwd, s_menu, s_sendNumber, s_waitForReply };
+   enum statustype { s_connected, s_sendNumber, s_waitForReply, s_primeFound, s_sendStop};
 
-   statustype _status = s_username;
+   std::vector<uint8_t> c_num, c_endnum, c_prime, c_endprime, c_stop;
+
+   statustype _status = s_sendNumber;
 
    SocketFD _connfd;
- 
-   std::string _username; // The username this connection is associated with
 
    std::string _inputbuf;
 
-   std::string _newpwd; // Used to store user input for changing passwords
-
-   int _pwd_attempts = 0;
-
-   std::unique_ptr<PasswdMgr> PWMgr;
 };
 
 

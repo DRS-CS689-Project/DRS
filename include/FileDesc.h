@@ -87,7 +87,7 @@ public:
          }
       }
 
-      int read_units = results / datasize;
+      unsigned int read_units = results / datasize;
       buf.reserve(read_units);
       for (unsigned int i=0; i< read_units; i++) {
          buf.push_back((T) bytebuf[i*datasize]);
@@ -145,12 +145,16 @@ public:
 
    void bindFD(const char *ip_addr, unsigned short int port);
    bool connectTo(const char *ip_addr, unsigned short port);
+   bool connectTo(unsigned long ip_addr, unsigned short port);
    void listenFD(int backlog = 5);
    bool acceptFD(SocketFD &server);
 
-   unsigned long getIPAddr();
-   void getIPAddrStr(std::string &buf);
-   unsigned short getPort();
+   // Sets this address to reusable to prevent problems when sockets don't shut down properly
+   void setReusable();
+
+   unsigned long getIPAddr();  // Gets IP in big endian (network) format
+   void getIPAddrStr(std::string &buf); // The IP string associated with this socket
+   unsigned short getPort();   // Port in little-endian (host) format
 
 private:
 
@@ -187,7 +191,7 @@ public:
 
    enum fd_file_type {readfd, writefd, appendfd};
 
-   bool openFile(fd_file_type ftype);
+   bool openFile(fd_file_type ftype, bool create = false);
 
 private:
    std::string _filename; 

@@ -163,9 +163,24 @@ SocketFD::SocketFD():FileDesc() {
    if (_fd == -1) {
       throw socket_error("Socket creation failed.");
    }
+   bzero(&_fd_addr, sizeof(_fd_addr));
 }
 
 SocketFD::~SocketFD() {
+
+}
+
+/*****************************************************************************************
+ * setReusable - sets the socket so the address can be reused. Gets rid of the annoying
+ *               can't open socket errors upon it not being closed properly
+ *
+ *****************************************************************************************/
+
+void SocketFD::setReusable() {
+   
+   int enable = 1;
+   if (setsockopt(_fd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(enable)) < 0)
+      throw socket_error("setsockopt failure setting SO_REUSEADDR");
 
 }
 
@@ -182,7 +197,6 @@ SocketFD::~SocketFD() {
 void SocketFD::bindFD(const char *ip_addr, short unsigned int port) {
 
    // Load the socket information to prep for binding
-   bzero(&_fd_addr, sizeof(_fd_addr));
    _fd_addr.sin_family = AF_INET;
    inet_pton(AF_INET, ip_addr, &_fd_addr.sin_addr.s_addr);
    _fd_addr.sin_port = htons(port);
@@ -204,19 +218,27 @@ void SocketFD::bindFD(const char *ip_addr, short unsigned int port) {
 
 bool SocketFD::connectTo(const char *ip_addr, unsigned short port) {
 
+   unsigned long n_ip_addr;
+
+   inet_pton(AF_INET, ip_addr, &n_ip_addr);
+   return connectTo(n_ip_addr, htons(port));
+}
+
+bool SocketFD::connectTo(unsigned long ip_addr, unsigned short port) {
    if ((_fd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
       throw socket_error("Socket creation failed.");
 
    // Load the socket information to prep for binding
    bzero(&_fd_addr, sizeof(_fd_addr));
    _fd_addr.sin_family = AF_INET;
-   inet_pton(AF_INET, ip_addr, &_fd_addr.sin_addr.s_addr);
-   _fd_addr.sin_port = htons(port);
+   _fd_addr.sin_addr.s_addr = ip_addr;
+   _fd_addr.sin_port = port;
 
    if (connect(_fd, (struct sockaddr *) &_fd_addr, sizeof(_fd_addr)) != 0)
       return false;
 
    return true;
+
 }
 
 /*****************************************************************************************
@@ -315,15 +337,21 @@ FileFD::~FileFD() {
  *                   readfd - read only
  *                   writefd - write only
  *                   appendfd - write only, moves pointer to the end
+ *             create - if the file doesn't exist, setting this true will cause it to be
+ *                      created
  *
  *    Returns: false if the file failed to open, true otherwise
  *
  ******************************************************************************************/
 
-bool FileFD::openFile(fd_file_type ftype) {
+bool FileFD::openFile(fd_file_type ftype, bool create) {
    int file_flags[] = {O_RDONLY, O_WRONLY, O_WRONLY | O_APPEND};
 
-   if ((_fd = open(_filename.c_str(), file_flags[ftype])) == -1)
+   int flags = file_flags[ftype];
+   if (create)
+      flags |= O_CREAT;
+
+   if ((_fd = open(_filename.c_str(), flags, S_IRUSR | S_IWUSR)) == -1)
       return false;
 
    return true;

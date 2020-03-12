@@ -30,6 +30,14 @@ public:
 
    std::unique_ptr<std::thread> th;
 
+   //needs to be fixed
+   bool getData(std::vector<uint8_t> &buf);
+   bool getCmdData(std::vector<uint8_t> &buf, std::vector<uint8_t> &startcmd, 
+                                                    std::vector<uint8_t> &endcmd);
+   std::vector<uint8_t>::iterator findCmd(std::vector<uint8_t> &buf, std::vector<uint8_t> &cmd);
+   void wrapCmd(std::vector<uint8_t> &buf, std::vector<uint8_t> &startcmd,
+                                                    std::vector<uint8_t> &endcmd);
+
 private:
    int readStdin();
 
@@ -41,6 +49,11 @@ private:
  
    // Manages the stdin FD for user inputs
    TermFD _stdin;
+
+
+
+
+   std::vector<uint8_t> c_num, c_endnum, c_prime, c_endprime, c_stop;
 
 };
 

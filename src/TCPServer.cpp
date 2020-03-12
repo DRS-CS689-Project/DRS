@@ -11,8 +11,11 @@
 #include <memory>
 #include <sstream>
 #include "TCPServer.h"
+#include <boost/multiprecision/cpp_int.hpp>
 
-TCPServer::TCPServer(){ // :_server_log("server.log", 0) {
+TCPServer::TCPServer(boost::multiprecision::uint128_t number, int numNodes){ // :_server_log("server.log", 0) {
+   this->number = number;
+   this->numOfNodes = numNodes;
 }
 
 
@@ -36,6 +39,8 @@ void TCPServer::bindSvr(const char *ip_addr, short unsigned int port) {
    // Set the socket to nonblocking
    _sockfd.setNonBlocking();
 
+   _sockfd.setReusable();
+
    // Load the socket information to prep for binding
    _sockfd.bindFD(ip_addr, port);
  
@@ -51,25 +56,74 @@ void TCPServer::bindSvr(const char *ip_addr, short unsigned int port) {
 
 void TCPServer::listenSvr() {
 
+
+   _sockfd.listenFD(5);
+
+   std::string ipaddr_str;
+   std::stringstream msg;
+   _sockfd.getIPAddrStr(ipaddr_str);
+   msg << "Server listening on IP " << ipaddr_str << "' port '" << _sockfd.getPort() << "'";
+   //_server_log.writeLog(msg.str().c_str());
+}
+
+
+/**********************************************************************************************
+ * runSvr - Performs a loop to look for connections and create TCPConn objects to handle
+ *          them. Also loops through the list of connections and handles data received and
+ *          sending of data. 
+ *
+ *    Throws: socket_error for recoverable errors, runtime_error for unrecoverable types
+ **********************************************************************************************/
+
+void TCPServer::runServer() {
    bool online = true;
    timespec sleeptime;
    sleeptime.tv_sec = 0;
    sleeptime.tv_nsec = 100000000;
-   int num_read = 0;
 
    // Start the server socket listening
-   _sockfd.listenFD(5);
+   listenSvr();
 
-    
    while (online) {
+      // wait until all nodes have connected
+      if(_connlist.size() != numOfNodes)
+         handleSocket();
+
+      // if all nodes have connected, start processing
+      if(_connlist.size() == numOfNodes)
+         // if handleConnections returns a true it means all primes have been
+         // found so shut down server
+         if(handleConnections())
+            online = false;
+
+      // So we're not chewing up CPU cycles unnecessarily
+      nanosleep(&sleeptime, NULL);
+   }
+}
+
+
+/**********************************************************************************************
+ * handleSocket - Checks the socket for incoming connections and validates against the whitelist.
+ *                Accepts valid connections and adds them to the connection list.
+ *
+ *    Returns: pointer to a new connection if one was found, otherwise NULL
+ *
+ *    Throws: socket_error for recoverable errors, runtime_error for unrecoverable types
+ **********************************************************************************************/
+
+TCPConn *TCPServer::handleSocket() {
+  
+   // The socket has data, means a new connection 
+   if (_sockfd.hasData()) {
+
       struct sockaddr_in cliaddr;
       socklen_t len = sizeof(cliaddr);
 
       if (_sockfd.hasData()) {
-         TCPConn *new_conn = new TCPConn();
+         TCPConn *new_conn = new TCPConn(this->number);
          if (!new_conn->accept(_sockfd)) {
             // _server_log.strerrLog("Data received on socket but failed to accept.");
-            continue;
+            return NULL;
          }
          
          // Get their IP Address string to use in logging
@@ -79,28 +133,50 @@ void TCPServer::listenSvr() {
          std::cout << "Client IP: " << ipaddr_str << std::endl;//testing
 
          //check is the client ip address on the whitelist
-         if ( !new_conn->isNewIPAllowed(ipaddr_str) ){
-            std::cout << "This IP address is not authorized" << std::endl;
-            new_conn->sendText("Not Authorized To Log into System\n");
-            new_conn->disconnect();
-            continue;  
-         }
+         // if ( !new_conn->isNewIPAllowed(ipaddr_str) ){
+         //    std::cout << "This IP address is not authorized" << std::endl;
+         //    new_conn->sendText("Not Authorized To Log into System\n");
+         //    new_conn->disconnect();
+         //    return NULL;  
+         // }
 
          std::cout << "***Got a connection***\n";
 
          _connlist.push_back(std::unique_ptr<TCPConn>(new_conn));
 
-         
-         //new_conn->sendText("Welcome to the CSCE 689 Server!\n");
+         if(_connlist.size() != numOfNodes) {
+            //new_conn->sendText("Waiting for all nodes to connect...\n");
+         }
 
          // Change this later
-         new_conn->startAuthentication();
-      }
+         //new_conn->startAuthentication();
 
-      // Loop through our connections, handling them
+         return new_conn;
+      }
+      
+   }
+   return NULL;
+}
+
+/**********************************************************************************************
+ * handleConnections - Loops through the list of clients, running their functions to handle the
+ *                     clients input/output.
+ *
+ *    Returns: number of new connections accepted
+ *
+ *    Throws: socket_error for recoverable errors, runtime_error for unrecoverable types
+ **********************************************************************************************/
+
+bool TCPServer::handleConnections() {
+
+   // Loop through our connections, handling them
       std::list<std::unique_ptr<TCPConn>>::iterator tptr = _connlist.begin();
       while (tptr != _connlist.end())
       {
+         if((*tptr)->foundAllPrimeFactors) {
+            return true;
+         }
+
          // If the user lost connection
          if (!(*tptr)->isConnected()) {
             // Log it
@@ -112,20 +188,20 @@ void TCPServer::listenSvr() {
          }
 
          // Process any user inputs
-         (*tptr)->handleConnection();
+         if((*tptr)->handleConnection()) {
+            //a prime was found so send stop message to all connections
+            std::list<std::unique_ptr<TCPConn>>::iterator tptr = _connlist.begin();
+            for(; tptr != _connlist.end(); tptr++)
+               (*tptr)->stopProcessing();
+         }
+
 
          // Increment our iterator
          tptr++;
       }
+      return false;
 
-      // So we're not chewing up CPU cycles unnecessarily
-      nanosleep(&sleeptime, NULL);
-   } 
-
-
-   
 }
-
 
 /**********************************************************************************************
  * shutdown - Cleanly closes the socket FD.
@@ -134,8 +210,6 @@ void TCPServer::listenSvr() {
  **********************************************************************************************/
 
 void TCPServer::shutdown() {
-
+   //_server_log.writeLog("Server shutting down.");
    _sockfd.closeFD();
 }
-
-
