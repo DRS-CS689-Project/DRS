@@ -8,8 +8,10 @@
 #include <thread>
 #include <boost/multiprecision/cpp_int.hpp>
 
+//namespace for boost lib to handle large numbers
 using namespace boost::multiprecision;
 
+//number of time to run pollards rho before running the expensive prime brute force check
 const unsigned int primecheck_depth = 10;
 
 /* "Unsigned int type to hold original value and calculations" */
@@ -29,36 +31,19 @@ public:
     DivFinderServer(LARGEINT input_value);
     ~DivFinderServer();
 
-    // Overload me 
-    //virtual void PolRho() = 0;
+    void setVerbose(int lvl);
 
     LARGEINT getOrigVal() { return _orig_val; }
 
-    virtual void combinePrimes(std::list<LARGEINT>& dest);
     LARGEINT calcPollardsRho(LARGEINT n);
  
-    void setVerbose(int lvl);
-
-    std::list<LARGEINT> primes;
-
     bool isPrimeBF(LARGEINT n, LARGEINT& divisor);
 
-    void simple();
-
-    void factor();
-
-    void factorSuper();
-
-    void factor(LARGEINT n); 
     void factorThread(LARGEINT n);
 
     void setEndProcess(bool inputBool) { this->end_process = inputBool; };
 
-    bool end_process = false;
-
     LARGEINT getPrimeDivFound() { return this->primeDivFound; };
-
-
 
 
 protected:
@@ -69,14 +54,12 @@ protected:
 
     LARGEINT primeDivFound = 0;
 
-    // Do not forget, your constructor should call this constructor
-
 private:
-    // Prevent instantiation without calling initialization 
 
     LARGEINT _orig_val;
 
-    // Stuff to be left alone
+    bool end_process = false;
+
 };
 
 #endif

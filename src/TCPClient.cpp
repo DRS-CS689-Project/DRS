@@ -103,61 +103,50 @@ void TCPClient::handleConnection() {
          // Display to the screen
          if (rsize > 0) {
             std::string subbuf2 = buf.substr(0, 3);
-            std::cout << "subBuf2: " << subbuf2 << std::endl;
+            //std::cout << "subBuf2: " << subbuf2 << std::endl;//TESTING
+            //Checks if a number has been sent by the server
+            //TODO: replace with message wrapp
             if (subbuf2 == "NUM"){
-               std::cout << "1st Message" << std::endl;
                std::string left;
                std::string right;
                split(buf, left, right, ' ');
-               std::cout << "right: " << right << std::endl;
+               //std::cout << "right: " << right << std::endl;//TESTING
 
                this->inputNum = right;
                this->initMessage = false;
 
-               	//Used 563, 197, 197, 163, 163, 41, 41, 
+               //Used 563, 197, 197, 163, 163, 41, 41, 
                uint128_t num = static_cast<uint128_t>(this->inputNum);
                
-               //auto d = DivFinderServer(num);
                this->d = DivFinderServer(num);
                this->d.setVerbose(3);
-
                
-               //std::thread th(&DivFinderServer::simple, &d);
-               //std::thread th(&DivFinderServer::factorThread, &this->d, num);
-               this->th = new std::thread(&DivFinderServer::factorThread, &this->d, num);
-               //d.factorThread(num);
+               //runs pollards rho on the number to find the divisor in the separate thread
+               this->th = std::make_unique<std::thread>(&DivFinderServer::factorThread, &this->d, num);
 
-               //std::this_thread::sleep_for(std::chrono::seconds(15));
-               //std::cout << "Ended Process" << std::endl;
-               //d.setEndProcess(true);
+               //set flag to alert program is active
                this->activeThread = true;
-               
-	            //th.join();
-               /*
-	            auto primeFound = d.getPrimeDivFound();
-
-               std::cout << "Prime Divisor Found : " << primeFound << std::endl;
-               
-               std::string mesg = static_cast<std::string>(d.getPrimeDivFound());
-               mesg = mesg + "\n"; 
-               std::cout << "Sending: " << mesg << std::endl;
-               std::this_thread::sleep_for(std::chrono::seconds(1));
-
-               
-               _sockfd.writeFD(mesg);*/
 
             }
-            //std::cout << "Recieved string: " << this->inputNum << std::endl;
-            else{
+            else
+            {
+               //print for debugging
                printf("In else: %s\n", buf.c_str());
-               if (buf == "QuitCalc")
+               //recieved quit processes signal, shuts down thread
+               if (buf == "QuitCalc"){
                   this->d.setEndProcess(true);
+                  this->activeThread = false;
+                  this->th->join();
+                  this->th.reset();
+               }
                fflush(stdout);
             }
          }
       }
 
+      //check if thread was spawned
       if (this->activeThread){
+         //send the found divisor to the main server
          if(this->d.getPrimeDivFound() != 0){
             std::cout << "Prime Divisor Found: " << this->d.getPrimeDivFound() << std::endl;
             this->activeThread = false;

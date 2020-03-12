@@ -28,7 +28,7 @@ public:
 
    DivFinderServer d;
 
-   std::thread* th;
+   std::unique_ptr<std::thread> th;
 
 private:
    int readStdin();
