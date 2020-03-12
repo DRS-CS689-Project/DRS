@@ -180,16 +180,20 @@ bool TCPConn::waitForDivisor(){
 
       std::cout << "got a prime " << primeStr << "\n";
 
-      DivFinderServer df;
+      this->number = this->number / prime;
 
-      if(df.isPrimeBF(this->number, prime)) {
+
+      DivFinderServer df;
+      LARGEINT l;
+
+      if(df.isPrimeBF(this->number, l)) {
          std::cout << "prime BF returned true\n";
          //what do i do now???
          foundAllPrimeFactors = true;
 
       } else {
          std::cout << "prime BF returned false\n";
-         this->number = this->number / prime;
+         
 
          //might not be needed
          _status = s_primeFound;
