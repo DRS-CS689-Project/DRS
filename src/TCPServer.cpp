@@ -189,6 +189,12 @@ bool TCPServer::handleConnections() {
             auto stop = std::chrono::high_resolution_clock::now();
             auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
             std::cout << "TIME: " << duration.count() << " microseconds\n";
+
+            std::list<std::unique_ptr<TCPConn>>::iterator tptr3 = _connlist.begin();
+            for(; tptr3 != _connlist.end(); tptr3++) {
+               (*tptr3)->sendDie();
+            }
+
             return true;
          }
 
@@ -210,7 +216,8 @@ bool TCPServer::handleConnections() {
             std::list<std::unique_ptr<TCPConn>>::iterator tptr2 = _connlist.begin();
             for(; tptr2 != _connlist.end(); tptr2++){
                if (tptr2 != tptr){
-                  (*tptr2)->stopProcessing(int(primeFound));
+                  //(*tptr2)->stopProcessing(int(primeFound));
+                  (*tptr2)->stopProcessing(primeFound);
                }
             }
                
@@ -232,5 +239,8 @@ bool TCPServer::handleConnections() {
 
 void TCPServer::shutdown() {
    //_server_log.writeLog("Server shutting down.");
+   std::list<std::unique_ptr<TCPConn>>::iterator tptr = _connlist.begin();
+   for(; tptr != _connlist.end(); tptr++)
+      (*tptr)->disconnect();
    _sockfd.closeFD();
 }

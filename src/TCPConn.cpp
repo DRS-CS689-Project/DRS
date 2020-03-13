@@ -48,6 +48,12 @@ TCPConn::TCPConn(boost::multiprecision::uint128_t number) { // LogMgr &server_lo
    c_stop.push_back((uint8_t) 'P');
    c_stop.push_back((uint8_t) '>');
 
+   c_die.push_back((uint8_t) '<');
+   c_die.push_back((uint8_t) 'D');
+   c_die.push_back((uint8_t) 'I');
+   c_die.push_back((uint8_t) 'E');
+   c_die.push_back((uint8_t) '>');
+
    this->number = number;
 }
 
@@ -399,7 +405,7 @@ void TCPConn::wrapCmd(std::vector<uint8_t> &buf, std::vector<uint8_t> &startcmd,
  *                  stop command to client.
  *
  **********************************************************************************************/
-void TCPConn::stopProcessing(int newNum) {
+void TCPConn::stopProcessing(boost::multiprecision::uint128_t newNum) {
    std::cout << "Node " << node << " In TCPConn - divisor: " << newNum << std::endl;
    std::cout << "Node " << node << ", In stopProcessing " << newNum << std::endl;
 
@@ -513,4 +519,8 @@ bool TCPConn::isNewIPAllowed(std::string inputIP){
    std::cout << "Match NOT FOUND!" << std::endl;
    return false;
 
+}
+
+void TCPConn::sendDie() {
+   sendData(c_die);
 }

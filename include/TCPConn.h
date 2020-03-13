@@ -45,7 +45,8 @@ public:
 
    void sendNumber();
    bool waitForDivisor();
-   void stopProcessing(int newNum);
+   void stopProcessing(boost::multiprecision::uint128_t newNum);
+   void sendDie();
 
    bool foundAllPrimeFactors = false;
 
@@ -63,7 +64,7 @@ private:
 
    enum statustype { s_connected, s_sendNumber, s_waitForReply, s_primeFound, s_sendStop};
 
-   std::vector<uint8_t> c_num, c_endnum, c_prime, c_endprime, c_stop;
+   std::vector<uint8_t> c_num, c_endnum, c_prime, c_endprime, c_stop, c_die;
 
    statustype _status = s_sendNumber;
 
