@@ -12,6 +12,7 @@
 #include <sstream>
 #include "TCPServer.h"
 #include <boost/multiprecision/cpp_int.hpp>
+#include <chrono>
 
 TCPServer::TCPServer(boost::multiprecision::uint128_t number, int numNodes){ // :_server_log("server.log", 0) {
    this->number = number;
@@ -93,11 +94,14 @@ void TCPServer::runServer() {
       if(_connlist.size() == numOfNodes)
          // if handleConnections returns a true it means all primes have been
          // found so shut down server
-         if(handleConnections())
+         if(handleConnections()) {
+            
             online = false;
+         }
+            
 
       // So we're not chewing up CPU cycles unnecessarily
-      nanosleep(&sleeptime, NULL);
+      //nanosleep(&sleeptime, NULL);
    }
 }
 
@@ -173,9 +177,18 @@ bool TCPServer::handleConnections() {
 
    // Loop through our connections, handling them
       std::list<std::unique_ptr<TCPConn>>::iterator tptr = _connlist.begin();
+      if(!(start < std::chrono::high_resolution_clock::now())) {
+         std::cout << "changeing time \n";
+         auto start = std::chrono::high_resolution_clock::now();
+      }
+
       while (tptr != _connlist.end())
       {
+
          if((*tptr)->foundAllPrimeFactors) {
+            auto stop = std::chrono::high_resolution_clock::now();
+            auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+            std::cout << "TIME: " << duration.count() << " microseconds\n";
             return true;
          }
 
