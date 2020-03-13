@@ -190,8 +190,13 @@ void TCPClient::handleConnection() {
             std::cout << "Sending: " << mesg << std::endl;
             std::this_thread::sleep_for(std::chrono::seconds(1));
             
-            this->th->join();
-            this->th.reset(nullptr);
+            if (this->th != nullptr)
+            {
+               this->th->join();
+               this->th.reset(nullptr);
+            }
+
+            
                
             //_sockfd.writeFD(mesg);
             _sockfd.writeBytes<uint8_t>(buf);
