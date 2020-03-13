@@ -200,21 +200,30 @@ bool TCPConn::waitForDivisor(){
       std::cout << "##########################################" << "\n";
       std::cout << "Node " << node << " got a prime " << primeStr << "\n";
       std::cout << "##########################################" << "\n";
+      
+      if (prime == 563){
+         int val = 1;
+      } 
 
       this->primeFactor = prime;
+      
 
       this->number = this->number / prime;
+      
+      
 
+      std::cout << "Node " << node << " Number: " << this->number << "\n";
 
       DivFinderServer df;
       LARGEINT l;
 
-      if(df.isPrimeBF(this->number, l)) {
-         std::cout << "Node " << node << " prime BF returned true\n";
+      if(this->number == 1) {
+         //df.isPrimeBF(this->number, l);
+         //std::cout << "Node " << node << " prime BF returned true\n";
          //what do i do now???
-         std::cout << "##########################################" << "\n";
-         std::cout << "Node " << node << " got a prime " << this->number << "\n";
-         std::cout << "##########################################" << "\n";
+         //std::cout << "##########################################" << "\n";
+         //std::cout << "Node " << node << " got a prime " << prime << "\n";
+         //std::cout << "##########################################" << "\n";
 
          foundAllPrimeFactors = true;
 

@@ -139,6 +139,9 @@ bool DivFinderServer::isPrimeBF(LARGEINT n, LARGEINT& divisor) {
     if (verbose >= 3)
         std::cout << "Checking if prime: " << n << std::endl;
 
+    if (n == 316969)
+        std::cout << "Checking if prime: " << n << std::endl;
+
     divisor = 0;
 
     // Take care of simple cases
@@ -216,7 +219,7 @@ void DivFinderServer::factorThread(LARGEINT n) {
 
         // We try to get a divisor using Pollards Rho
         LARGEINT d = calcPollardsRho(n);
-        std::this_thread::sleep_for(std::chrono::microseconds(20));
+        //std::this_thread::sleep_for(std::chrono::microseconds(20));
         if (d == 0) {
             return;
         }

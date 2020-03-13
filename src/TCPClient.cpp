@@ -188,7 +188,7 @@ void TCPClient::handleConnection() {
             std::string mesg = static_cast<std::string>(d.getPrimeDivFound());
             mesg = mesg + "\n"; 
             std::cout << "Sending: " << mesg << std::endl;
-            std::this_thread::sleep_for(std::chrono::seconds(1));
+            //std::this_thread::sleep_for(std::chrono::seconds(1));
             
             if (this->th != nullptr)
             {

@@ -57,6 +57,7 @@ public:
 private:
    boost::multiprecision::uint128_t primeFactor;
 
+   boost::multiprecision::uint128_t refNumber;   
 
    boost::multiprecision::uint128_t number;
 
