@@ -150,6 +150,8 @@ TCPConn *TCPServer::handleSocket() {
 
          // Change this later
          //new_conn->startAuthentication();
+         new_conn->node = nodes;
+         nodes++;
 
          return new_conn;
       }
@@ -189,10 +191,16 @@ bool TCPServer::handleConnections() {
 
          // Process any user inputs
          if((*tptr)->handleConnection()) {
-            //a prime was found so send stop message to all connections
-            std::list<std::unique_ptr<TCPConn>>::iterator tptr = _connlist.begin();
-            for(; tptr != _connlist.end(); tptr++)
-               (*tptr)->stopProcessing();
+            auto primeFound = (*tptr)->getPrimeFactor();
+            std::cout << "In TCPServer - primeFound: " << primeFound << std::endl;
+            //a prime was found so send stop message to all other connections
+            std::list<std::unique_ptr<TCPConn>>::iterator tptr2 = _connlist.begin();
+            for(; tptr2 != _connlist.end(); tptr2++){
+               if (tptr2 != tptr){
+                  (*tptr2)->stopProcessing(int(primeFound));
+               }
+            }
+               
          }
 
 

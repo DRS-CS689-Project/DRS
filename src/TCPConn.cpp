@@ -97,9 +97,18 @@ bool TCPConn::handleConnection() {
    bool foundPrime = false;
 
    try {
+      std::vector<uint8_t> buf;
       switch (_status) {
          // send current number to be factored to client
          case s_sendNumber:
+            std::cout << "Node " << node << " In s_sendNuber" << std::endl;
+            
+            if (getData(buf))
+            {
+               std::string bufStr(buf.begin(), buf.end());
+               //std::cout << "buf: " << bufStr  << std::endl;
+               buf.clear();
+            }
             sendNumber();
             break;
 
@@ -107,13 +116,23 @@ bool TCPConn::handleConnection() {
          // if waitForDivisor() returns true it means that this TCPConn object
          // returned a prime and tells TCPServer to reset all connections
          case s_waitForReply:
+            //std::cout << "Node " << node << " In s_waitForReply" << std::endl;
             foundPrime = waitForDivisor();
             break;
 
          // send the stop command to client and reset status to send the current
          // number to be factored
          case s_sendStop:
+            std::cout << "Node " << node << " In s_sendStop" << std::endl;
             sendData(c_stop);
+            //std::vector<uint8_t> buf;
+            if (getData(buf))
+            {
+               std::string bufStr(buf.begin(), buf.end());
+               //std::cout << "buf: " << bufStr  << std::endl;
+               buf.clear();
+            }
+
             _status = s_sendNumber;
             break;
 
@@ -178,7 +197,11 @@ bool TCPConn::waitForDivisor(){
       std::string primeStr(buf.begin(), buf.end());
       boost::multiprecision::uint128_t prime(primeStr);
 
-      std::cout << "got a prime " << primeStr << "\n";
+      std::cout << "##########################################" << "\n";
+      std::cout << "Node " << node << " got a prime " << primeStr << "\n";
+      std::cout << "##########################################" << "\n";
+
+      this->primeFactor = prime;
 
       this->number = this->number / prime;
 
@@ -187,16 +210,20 @@ bool TCPConn::waitForDivisor(){
       LARGEINT l;
 
       if(df.isPrimeBF(this->number, l)) {
-         std::cout << "prime BF returned true\n";
+         std::cout << "Node " << node << " prime BF returned true\n";
          //what do i do now???
+         std::cout << "##########################################" << "\n";
+         std::cout << "Node " << node << " got a prime " << this->number << "\n";
+         std::cout << "##########################################" << "\n";
+
          foundAllPrimeFactors = true;
 
       } else {
-         std::cout << "prime BF returned false\n";
+         std::cout << "Node " << node << " prime BF returned false\n";
          
 
          //might not be needed
-         _status = s_primeFound;
+         _status = s_sendNumber;
       }
       return true;
    }
@@ -363,7 +390,12 @@ void TCPConn::wrapCmd(std::vector<uint8_t> &buf, std::vector<uint8_t> &startcmd,
  *                  stop command to client.
  *
  **********************************************************************************************/
-void TCPConn::stopProcessing() {
+void TCPConn::stopProcessing(int newNum) {
+   std::cout << "Node " << node << " In TCPConn - divisor: " << newNum << std::endl;
+   std::cout << "Node " << node << ", In stopProcessing " << newNum << std::endl;
+
+   //this->primeFactor = newNum;
+   this->number = this->number/newNum;
    _status = s_sendStop;
 }
 

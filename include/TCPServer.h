@@ -23,6 +23,8 @@ public:
    TCPConn *handleSocket();
    virtual bool handleConnections();
 
+   int nodes = 1;
+
 private:
    // Class to manage the server socket
    SocketFD _sockfd;

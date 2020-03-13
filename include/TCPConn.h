@@ -45,12 +45,19 @@ public:
 
    void sendNumber();
    bool waitForDivisor();
-   void stopProcessing();
+   void stopProcessing(int newNum);
 
    bool foundAllPrimeFactors = false;
 
+   boost::multiprecision::uint128_t getPrimeFactor(){ return this->primeFactor;};
+   boost::multiprecision::uint128_t getNumber(){ return this->number;};
+   
+   int node = 0;
    int dbNum = 0;
 private:
+   boost::multiprecision::uint128_t primeFactor;
+
+
    boost::multiprecision::uint128_t number;
 
    enum statustype { s_connected, s_sendNumber, s_waitForReply, s_primeFound, s_sendStop};
@@ -62,6 +69,7 @@ private:
    SocketFD _connfd;
 
    std::string _inputbuf;
+
 
 };
 

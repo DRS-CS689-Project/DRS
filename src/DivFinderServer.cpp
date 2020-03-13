@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <boost/multiprecision/cpp_int.hpp>
 #include <boost/integer/common_factor.hpp>
+//#include "threadSafeRandGen.h"
 
 
 
@@ -64,19 +65,28 @@ LARGEINT2X DivFinderServer::modularPow(LARGEINT2X base, int exponent, LARGEINT2X
  **********************************************************************************************/
 
 LARGEINT DivFinderServer::calcPollardsRho(LARGEINT n) {
+    //std::cout << "IN PR" << std::endl;
+
     if (n <= 3)
         return n;
 
     // Initialize our random number generator
-    srand(time(NULL));
+    //srand(time(NULL));
+    int seed = std::hash<std::thread::id>{}(std::this_thread::get_id()) + static_cast<long int>(time(NULL));
+    srand(seed);
 
+    //thread_local unsigned int seed1 = time(NULL) + rand();
+    //thRandGen::Seed(time(0));
+    //std::cout << "After seed" << std::endl;
     // pick a random number from the range [2, N)
     LARGEINT2X x = (rand() % (n - 2)) + 2;
+    //LARGEINT2X x = (rand_r(&seed1) % (n - 2)) + 2;
     LARGEINT2X y = x;    // Per the algorithm
 
-
+    //thread_local unsigned int seed2 = time(NULL) + rand();
     // random number for c = [1, N)
     LARGEINT2X c = (rand() % (n - 1)) + 1;
+    //LARGEINT2X c = (rand_r(&seed1) % (n - 1)) + 1;
 
     LARGEINT2X d = 1;
     if (verbose == 3)
@@ -206,7 +216,7 @@ void DivFinderServer::factorThread(LARGEINT n) {
 
         // We try to get a divisor using Pollards Rho
         LARGEINT d = calcPollardsRho(n);
-        std::this_thread::sleep_for(std::chrono::seconds(2));
+        std::this_thread::sleep_for(std::chrono::microseconds(20));
         if (d == 0) {
             return;
         }
