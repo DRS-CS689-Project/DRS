@@ -146,7 +146,7 @@ bool TCPConn::handleConnection() {
       return false;
    }
 
-   nanosleep(&sleeptime, NULL);
+   //nanosleep(&sleeptime, NULL);
    return foundPrime;
 }
 

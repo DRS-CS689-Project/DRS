@@ -203,7 +203,7 @@ void TCPClient::handleConnection() {
          }
       }
 
-      nanosleep(&sleeptime, NULL);
+      //nanosleep(&sleeptime, NULL);
    }
 
 
