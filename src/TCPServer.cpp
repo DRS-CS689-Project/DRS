@@ -13,6 +13,7 @@
 #include "TCPServer.h"
 #include <boost/multiprecision/cpp_int.hpp>
 #include <chrono>
+#include <thread>
 
 TCPServer::TCPServer(boost::multiprecision::uint128_t number, int numNodes){ // :_server_log("server.log", 0) {
    this->number = number;
@@ -193,12 +194,12 @@ bool TCPServer::handleConnections() {
             auto stop = std::chrono::high_resolution_clock::now();
             auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
             std::cout << "TIME: " << duration.count() << " microseconds\n";
-
+            std::cout << "Sending Kill" << std::endl;
             std::list<std::unique_ptr<TCPConn>>::iterator tptr3 = _connlist.begin();
             for(; tptr3 != _connlist.end(); tptr3++) {
                (*tptr3)->sendDie();
             }
-
+            std::this_thread::sleep_for(std::chrono::seconds(1));
             return true;
          }
 
@@ -223,6 +224,8 @@ bool TCPServer::handleConnections() {
                if (tptr2 != tptr){
                   //(*tptr2)->stopProcessing(int(primeFound));
                   (*tptr2)->stopProcessing(primeFound);
+                  //testing
+                  //(*tptr2)->sendDie();
                }
             }
                

@@ -136,10 +136,16 @@ void TCPClient::handleConnection() {
       
       if (_sockfd.hasData()) {
          std::vector<uint8_t> buf;
-         //std::cout "in sockFd.hasData(), rawbuf:"
-
 
          if (!getData(buf)) {
+            continue;
+         }
+
+         std::string rawMesgStr(buf.begin(), buf.end());
+         std::cout << "Client Recieved Raw Message: " << rawMesgStr << std::endl;
+
+         //
+         /*if (!getData(buf)) {
             //does this need to be here???
             this->d.setEndProcess(true);
             this->activeThread = false;
@@ -148,6 +154,10 @@ void TCPClient::handleConnection() {
                this->th->join();
                this->th.reset(nullptr);
             }
+            closeConn();
+         }*/
+         if (!(findCmd(buf, c_die) == buf.end()))
+         {
             closeConn();
          }
 
