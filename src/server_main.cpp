@@ -39,7 +39,8 @@ int main(int argc, char *argv[]) {
    int c = 0;
    long portval;
    std::string numString;
-   boost::multiprecision::uint128_t number = 9804317095675;
+   //boost::multiprecision::uint128_t number = 9804317095675;
+   boost::multiprecision::uint128_t number;
    int numNodes = 2;
 
    while ((c = getopt(argc, argv, "f:n:a:p:")) != -1) {

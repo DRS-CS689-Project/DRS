@@ -55,6 +55,8 @@ public:
    
    int node = 0;
    int dbNum = 0;
+
+   unsigned int tcpConnTask = 0;
 private:
    boost::multiprecision::uint128_t primeFactor;
 
@@ -64,7 +66,7 @@ private:
 
    enum statustype { s_connected, s_sendNumber, s_waitForReply, s_primeFound, s_sendStop};
 
-   std::vector<uint8_t> c_num, c_endnum, c_prime, c_endprime, c_stop, c_die;
+   std::vector<uint8_t> c_task, c_endtask, c_num, c_endnum, c_prime, c_endprime, c_stop, c_die;
 
    statustype _status = s_sendNumber;
 

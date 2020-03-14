@@ -21,6 +21,15 @@ const char pwdfilename[] = "passwd";
 TCPConn::TCPConn(boost::multiprecision::uint128_t number) { // LogMgr &server_log):_server_log(server_log) {
    uint8_t slash = (uint8_t) '/';
 
+   c_task.push_back((uint8_t) '<');
+   c_task.push_back((uint8_t) 'T');
+   c_task.push_back((uint8_t) 'S');
+   c_task.push_back((uint8_t) 'K');
+   c_task.push_back((uint8_t) '>');
+
+   c_endtask = c_task;
+   c_endtask.insert(c_endtask.begin()+1, 1, slash);
+
    c_num.push_back((uint8_t) '<');
    c_num.push_back((uint8_t) 'N');
    c_num.push_back((uint8_t) 'U');
@@ -116,6 +125,12 @@ bool TCPConn::handleConnection() {
                buf.clear();
             }
             sendNumber();
+            if (getData(buf))
+            {
+               std::string bufStr(buf.begin(), buf.end());
+               //std::cout << "buf: " << bufStr  << std::endl;
+               buf.clear();
+            }
             break;
 
          // wait for the divisor to come back from client
@@ -160,6 +175,8 @@ bool TCPConn::handleConnection() {
 
 // sends the current number to be factored to client
 void TCPConn::sendNumber() {
+   //updates task number
+   this->tcpConnTask++;
    // Convert it to a string
    std::string bignumstr  = boost::lexical_cast<std::string>(this->number);
 
@@ -168,6 +185,7 @@ void TCPConn::sendNumber() {
 
    // wrap with num tags and send to client
    wrapCmd(buf, c_num, c_endnum);
+   std::cout << "sending " << bignumstr << std::endl;
    sendData(buf);
 
    // wait for reply
@@ -187,10 +205,28 @@ void TCPConn::sendNumber() {
 
 bool TCPConn::waitForDivisor(){
    if (_connfd.hasData()) {
+      std::vector<uint8_t> task;
       std::vector<uint8_t> buf;
 
       if (!getData(buf))
          return false;
+
+      std::string rawMesgStr(buf.begin(), buf.end());
+      std::cout << "Raw Message: " << rawMesgStr << std::endl;
+
+      task = buf;
+
+      if (!getCmdData(task, c_task, c_endtask)) {
+         //std::stringstream msg;
+         //msg << "Replication data possibly corrupted from" << getNodeID() << "\n";
+         //_server_log.writeLog(msg.str().c_str());
+         //disconnect();
+         return false;
+      }
+
+      std::string taskStr(task.begin(), task.end());
+
+      unsigned int taskNumber = std::stoul(taskStr);
 
       if (!getCmdData(buf, c_prime, c_endprime)) {
          //std::stringstream msg;
@@ -200,11 +236,15 @@ bool TCPConn::waitForDivisor(){
          return false;
       }
 
+      if (taskNumber != this->tcpConnTask){
+         return false;
+      }
+
       std::string primeStr(buf.begin(), buf.end());
       boost::multiprecision::uint128_t prime(primeStr);
 
       std::cout << "##########################################" << "\n";
-      std::cout << "Node " << node << " got a prime " << primeStr << "\n";
+      std::cout << "Node " << node << " got a prime " << primeStr  << " for task "<< taskStr << "\n";
       std::cout << "##########################################" << "\n";
       
       if (prime == 563){
@@ -218,7 +258,7 @@ bool TCPConn::waitForDivisor(){
       
       
 
-      std::cout << "Node " << node << " Number: " << this->number << "\n";
+      std::cout << "Node " << this->node << " new Number: " << this->number << "\n";
 
       DivFinderServer df;
       LARGEINT l;
@@ -234,7 +274,7 @@ bool TCPConn::waitForDivisor(){
          foundAllPrimeFactors = true;
 
       } else {
-         std::cout << "Node " << node << " prime BF returned false\n";
+         std::cout << "Node " << this->node << " number not 1\n";
          
 
          //might not be needed
@@ -406,8 +446,8 @@ void TCPConn::wrapCmd(std::vector<uint8_t> &buf, std::vector<uint8_t> &startcmd,
  *
  **********************************************************************************************/
 void TCPConn::stopProcessing(boost::multiprecision::uint128_t newNum) {
-   std::cout << "Node " << node << " In TCPConn - divisor: " << newNum << std::endl;
-   std::cout << "Node " << node << ", In stopProcessing " << newNum << std::endl;
+   //std::cout << "Node " << node << " In TCPConn - divisor: " << newNum << std::endl;
+   std::cout << "Node " << this->node << ", In TCPConn stopProcessing - primeDivisor: " << newNum << std::endl;
 
    //this->primeFactor = newNum;
    this->number = this->number/newNum;

@@ -1,16 +1,6 @@
 /* include/config.h.  Generated from config.h.in by configure.  */
 /* include/config.h.in.  Generated from configure.ac by autoheader.  */
 
-/* "Unsigned int type to hold original value and calculations" */
-#define LARGEINT uint128_t
-//#define LARGEINT uint256_t uncomment for 256 bits
-
-/* "Unsigned int twice as large as LARGEINT (bit-wise)" */
-#define LARGEINT2X uint256_t
-
-/* "Signed int made of twice the bits as LARGEINT2X" */
-#define LARGESIGNED2X int512_t
-
 /* Define to 1 if you have the <arpa/inet.h> header file. */
 #define HAVE_ARPA_INET_H 1
 

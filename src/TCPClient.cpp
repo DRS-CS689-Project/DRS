@@ -34,6 +34,15 @@ TCPClient::TCPClient() {
 
    uint8_t slash = (uint8_t) '/';
 
+   c_task.push_back((uint8_t) '<');
+   c_task.push_back((uint8_t) 'T');
+   c_task.push_back((uint8_t) 'S');
+   c_task.push_back((uint8_t) 'K');
+   c_task.push_back((uint8_t) '>');
+
+   c_endtask = c_task;
+   c_endtask.insert(c_endtask.begin()+1, 1, slash);
+
    c_num.push_back((uint8_t) '<');
    c_num.push_back((uint8_t) 'N');
    c_num.push_back((uint8_t) 'U');
@@ -127,8 +136,12 @@ void TCPClient::handleConnection() {
       
       if (_sockfd.hasData()) {
          std::vector<uint8_t> buf;
+         //std::cout "in sockFd.hasData(), rawbuf:"
+
+
          if (!getData(buf)) {
             //throw std::runtime_error("Read on client socket failed.");
+            //std::cout << "Got data, can't read" << std::endl;
             continue;
          }
 
@@ -140,17 +153,37 @@ void TCPClient::handleConnection() {
 
          // Display to the screen
          //if (rsize > 0) {
+            if (!(findCmd(buf, c_stop) == buf.end()))
+            {
+               //print for debugging
+               printf("received stop command!!!!!\n");
+               //recieved quit processes signal, shuts down thread
+               //if (buf == "QuitCalc"){
+                  this->d.setEndProcess(true);
+                  this->activeThread = false;
+                  if (this->th != nullptr)
+                  {
+                     this->th->join();
+                     this->th.reset(nullptr);
+                  }
+               //}
+               //fflush(stdout);
+            }
+            //else if (getCmdData(buf, c_num, c_endnum)) {
             if (getCmdData(buf, c_num, c_endnum)) {
                std::string numStr(buf.begin(), buf.end());
 
                this->inputNum = numStr;
-               this->initMessage = false;
+               std::cout << "recieved : " << numStr << std::endl;
+               //this->initMessage = false;
 
                //Used 563, 197, 197, 163, 163, 41, 41, 
                uint128_t num = static_cast<uint128_t>(this->inputNum);
                
                this->d = DivFinderServer(num);
                this->d.setVerbose(0);
+
+               this->clientTask++;
 
                //runs pollards rho on the number to find the divisor in the separate thread
                this->th = std::make_unique<std::thread>(&DivFinderServer::factorThread, &this->d, num);
@@ -159,6 +192,7 @@ void TCPClient::handleConnection() {
                this->activeThread = true;
 
             }
+            /*
             else if (!(findCmd(buf, c_stop) == buf.end()))
             {
                //print for debugging
@@ -175,6 +209,14 @@ void TCPClient::handleConnection() {
                //}
                //fflush(stdout);
             }
+            else{
+               std::cout << "unknown command: (socket has data -> else)" << std::endl;
+               std::cout << "buf: ";
+               for (auto& b : buf){
+                  std::cout << b;
+               }
+               std::cout << "\n";
+            }*/
             // else if(!(findCmd(buf, c_die) == buf.end())) {
             //    closeConn();
             // }
@@ -188,6 +230,12 @@ void TCPClient::handleConnection() {
             std::cout << "Prime Divisor Found: " << this->d.getPrimeDivFound() << std::endl;
             this->activeThread = false;
 
+            std::string taskStr = std::to_string(this->clientTask);
+            std::vector<uint8_t> task(taskStr.begin(), taskStr.end());
+            
+
+            wrapCmd(task, c_task, c_endtask);
+
             std::string bignumstr  = boost::lexical_cast<std::string>(d.getPrimeDivFound());
 
             // put it into a byte vector for transmission
@@ -197,7 +245,7 @@ void TCPClient::handleConnection() {
                
             std::string mesg = static_cast<std::string>(d.getPrimeDivFound());
             mesg = mesg + "\n"; 
-            std::cout << "Sending: " << mesg << std::endl;
+            std::cout << "Sending: " << this->clientTask << " " << mesg << std::endl;
             //std::this_thread::sleep_for(std::chrono::seconds(1));
             
             if (this->th != nullptr)
@@ -206,10 +254,16 @@ void TCPClient::handleConnection() {
                this->th.reset(nullptr);
             }
 
+            std::vector<uint8_t> finalBuf;
+            finalBuf.reserve(task.size() + buf.size());
+            finalBuf.insert(finalBuf.end(), task.begin(), task.end() );
+            finalBuf.insert(finalBuf.end(), buf.begin(), buf.end() );
+            //buf = tsk + buf;
             
                
             //_sockfd.writeFD(mesg);
-            _sockfd.writeBytes<uint8_t>(buf);
+            //_sockfd.writeBytes<uint8_t>(buf);
+            _sockfd.writeBytes<uint8_t>(finalBuf);
          }
       }
 

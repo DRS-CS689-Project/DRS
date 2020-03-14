@@ -9,6 +9,7 @@
 #include <boost/multiprecision/cpp_int.hpp>
 #include <chrono>
 #include <boost/optional.hpp>
+#include <vector>
 
 class TCPServer : public Server 
 {
@@ -26,8 +27,11 @@ public:
    virtual bool handleConnections();
 
    int nodes = 1;
+   unsigned int serverTask = 0;
 
    std::chrono::system_clock::time_point start;
+
+   std::vector<boost::multiprecision::uint128_t> primeFactorsVector; 
 
 private:
    // Class to manage the server socket
@@ -35,6 +39,8 @@ private:
  
    // List of TCPConn objects to manage connections
    std::list<std::unique_ptr<TCPConn>> _connlist;
+
+   
 
    boost::multiprecision::uint128_t number;
 

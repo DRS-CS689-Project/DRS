@@ -50,10 +50,10 @@ private:
    // Manages the stdin FD for user inputs
    TermFD _stdin;
 
+   unsigned int clientTask = 0;
 
 
-
-   std::vector<uint8_t> c_num, c_endnum, c_prime, c_endprime, c_stop, c_die;
+   std::vector<uint8_t> c_task, c_endtask, c_num, c_endnum, c_prime, c_endprime, c_stop, c_die;
 
 };
 

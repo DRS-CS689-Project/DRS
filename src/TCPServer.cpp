@@ -95,6 +95,10 @@ void TCPServer::runServer() {
          // if handleConnections returns a true it means all primes have been
          // found so shut down server
          if(handleConnections()) {
+            std::cout << "Prime factors: " << std::endl;
+            for (auto& pf : this->primeFactorsVector){
+               std::cout << pf << std::endl;
+            }
             
             online = false;
          }
@@ -212,6 +216,7 @@ bool TCPServer::handleConnections() {
          if((*tptr)->handleConnection()) {
             auto primeFound = (*tptr)->getPrimeFactor();
             std::cout << "In TCPServer - primeFound: " << primeFound << std::endl;
+            this->primeFactorsVector.emplace_back(primeFound);
             //a prime was found so send stop message to all other connections
             std::list<std::unique_ptr<TCPConn>>::iterator tptr2 = _connlist.begin();
             for(; tptr2 != _connlist.end(); tptr2++){
