@@ -12,6 +12,7 @@
 #include <sstream>
 #include "TCPServer.h"
 #include <boost/multiprecision/cpp_int.hpp>
+#include <chrono>
 
 TCPServer::TCPServer(boost::multiprecision::uint128_t number, int numNodes){ // :_server_log("server.log", 0) {
    this->number = number;
@@ -93,11 +94,14 @@ void TCPServer::runServer() {
       if(_connlist.size() == numOfNodes)
          // if handleConnections returns a true it means all primes have been
          // found so shut down server
-         if(handleConnections())
+         if(handleConnections()) {
+            
             online = false;
+         }
+            
 
       // So we're not chewing up CPU cycles unnecessarily
-      nanosleep(&sleeptime, NULL);
+      //nanosleep(&sleeptime, NULL);
    }
 }
 
@@ -150,6 +154,8 @@ TCPConn *TCPServer::handleSocket() {
 
          // Change this later
          //new_conn->startAuthentication();
+         new_conn->node = nodes;
+         nodes++;
 
          return new_conn;
       }
@@ -171,9 +177,24 @@ bool TCPServer::handleConnections() {
 
    // Loop through our connections, handling them
       std::list<std::unique_ptr<TCPConn>>::iterator tptr = _connlist.begin();
+      if(!(start < std::chrono::high_resolution_clock::now())) {
+         std::cout << "changeing time \n";
+         auto start = std::chrono::high_resolution_clock::now();
+      }
+
       while (tptr != _connlist.end())
       {
+
          if((*tptr)->foundAllPrimeFactors) {
+            auto stop = std::chrono::high_resolution_clock::now();
+            auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+            std::cout << "TIME: " << duration.count() << " microseconds\n";
+
+            std::list<std::unique_ptr<TCPConn>>::iterator tptr3 = _connlist.begin();
+            for(; tptr3 != _connlist.end(); tptr3++) {
+               (*tptr3)->sendDie();
+            }
+
             return true;
          }
 
@@ -189,10 +210,17 @@ bool TCPServer::handleConnections() {
 
          // Process any user inputs
          if((*tptr)->handleConnection()) {
-            //a prime was found so send stop message to all connections
-            std::list<std::unique_ptr<TCPConn>>::iterator tptr = _connlist.begin();
-            for(; tptr != _connlist.end(); tptr++)
-               (*tptr)->stopProcessing();
+            auto primeFound = (*tptr)->getPrimeFactor();
+            std::cout << "In TCPServer - primeFound: " << primeFound << std::endl;
+            //a prime was found so send stop message to all other connections
+            std::list<std::unique_ptr<TCPConn>>::iterator tptr2 = _connlist.begin();
+            for(; tptr2 != _connlist.end(); tptr2++){
+               if (tptr2 != tptr){
+                  //(*tptr2)->stopProcessing(int(primeFound));
+                  (*tptr2)->stopProcessing(primeFound);
+               }
+            }
+               
          }
 
 
@@ -211,5 +239,8 @@ bool TCPServer::handleConnections() {
 
 void TCPServer::shutdown() {
    //_server_log.writeLog("Server shutting down.");
+   std::list<std::unique_ptr<TCPConn>>::iterator tptr = _connlist.begin();
+   for(; tptr != _connlist.end(); tptr++)
+      (*tptr)->disconnect();
    _sockfd.closeFD();
 }

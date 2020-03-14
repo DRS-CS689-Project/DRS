@@ -7,6 +7,8 @@
 #include "FileDesc.h"
 #include "TCPConn.h"
 #include <boost/multiprecision/cpp_int.hpp>
+#include <chrono>
+#include <boost/optional.hpp>
 
 class TCPServer : public Server 
 {
@@ -22,6 +24,10 @@ public:
 
    TCPConn *handleSocket();
    virtual bool handleConnections();
+
+   int nodes = 1;
+
+   std::chrono::system_clock::time_point start;
 
 private:
    // Class to manage the server socket

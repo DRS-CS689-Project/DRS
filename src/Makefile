@@ -115,7 +115,8 @@ tcpclient_LINK = $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) \
 	$(tcpclient_LDFLAGS) $(LDFLAGS) -o $@
 am_tcpserver_OBJECTS = server_main.$(OBJEXT) PasswdMgr.$(OBJEXT) \
 	FileDesc.$(OBJEXT) Server.$(OBJEXT) TCPServer.$(OBJEXT) \
-	TCPConn.$(OBJEXT) strfuncts.$(OBJEXT)
+	TCPConn.$(OBJEXT) strfuncts.$(OBJEXT) \
+	DivFinderServer.$(OBJEXT)
 tcpserver_OBJECTS = $(am_tcpserver_OBJECTS)
 tcpserver_LDADD = $(LDADD)
 tcpserver_LINK = $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) \
@@ -194,7 +195,7 @@ CPP = gcc -E
 CPPFLAGS = 
 CXX = g++
 CXXDEPMODE = depmode=gcc3
-CXXFLAGS = -g -O2
+CXXFLAGS = -g 
 CYGPATH_W = echo
 DEFS = -DHAVE_CONFIG_H
 DEPDIR = .deps
@@ -272,7 +273,7 @@ target_alias =
 top_build_prefix = ../
 top_builddir = ..
 top_srcdir = ..
-tcpserver_SOURCES = server_main.cpp PasswdMgr.cpp FileDesc.cpp Server.cpp TCPServer.cpp TCPConn.cpp strfuncts.cpp
+tcpserver_SOURCES = server_main.cpp PasswdMgr.cpp FileDesc.cpp Server.cpp TCPServer.cpp TCPConn.cpp strfuncts.cpp DivFinderServer.cpp
 tcpserver_LDFLAGS = -largon2
 tcpclient_SOURCES = client_main.cpp Client.cpp FileDesc.cpp TCPClient.cpp strfuncts.cpp DivFinderServer.cpp
 tcpclient_LDFLAGS = -pthread

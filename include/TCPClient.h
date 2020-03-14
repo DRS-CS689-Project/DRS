@@ -53,7 +53,7 @@ private:
 
 
 
-   std::vector<uint8_t> c_num, c_endnum, c_prime, c_endprime, c_stop;
+   std::vector<uint8_t> c_num, c_endnum, c_prime, c_endprime, c_stop, c_die;
 
 };
 
