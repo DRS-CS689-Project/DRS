@@ -140,16 +140,16 @@ void TCPClient::handleConnection() {
 
 
          if (!getData(buf)) {
-            //throw std::runtime_error("Read on client socket failed.");
-            //std::cout << "Got data, can't read" << std::endl;
-            continue;
+            //does this need to be here???
+            this->d.setEndProcess(true);
+            this->activeThread = false;
+            if (this->th != nullptr)
+            {
+               this->th->join();
+               this->th.reset(nullptr);
+            }
+            closeConn();
          }
-
-         // Select indicates data, but 0 bytes...usually because it's disconnected
-         // if (rsize == 0) {
-         //    closeConn();
-         //    break;
-         // }
 
          // Display to the screen
          //if (rsize > 0) {
@@ -217,9 +217,7 @@ void TCPClient::handleConnection() {
                }
                std::cout << "\n";
             }*/
-            // else if(!(findCmd(buf, c_die) == buf.end())) {
-            //    closeConn();
-            // }
+
          //}
       }
 
