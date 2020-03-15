@@ -203,16 +203,22 @@ void DivFinderServer::factorThread(LARGEINT n) {
             if (verbose >= 2)
                 std::cout << "Pollards rho timed out, checking if the following is prime: " << n << std::endl;
             LARGEINT divisor;
-            if (isPrimeBF(n, divisor)) {
-                if (verbose >= 2)
-                    std::cout << "Prime found: " << n << std::endl;
-                this->primeDivFound = n;
-                return;
+            if (!isPrimeMR(n, 10)){
+                if (isPrimeBF(n, divisor)) {
+                    if (verbose >= 2)
+                        std::cout << "Prime found: " << n << std::endl;
+                    this->primeDivFound = n;
+                    return;
+                }
+                else {   // We found a prime divisor, save it and keep finding primes
+                    if (verbose >= 2)
+                        std::cout << "Prime found: " << divisor << std::endl;
+                    this->primeDivFound = divisor;
+                    return;
+                }
             }
-            else {   // We found a prime divisor, save it and keep finding primes
-                if (verbose >= 2)
-                    std::cout << "Prime found: " << divisor << std::endl;
-                this->primeDivFound = divisor;
+            else{
+                this->primeDivFound = n;
                 return;
             }
         }
@@ -238,4 +244,83 @@ void DivFinderServer::factorThread(LARGEINT n) {
     }
     std::cout << "process end signal detected" << std::endl;
     return;
+}
+
+
+LARGEINT2X DivFinderServer::power(LARGEINT2X x, LARGEINT2X y, LARGEINT2X p) 
+{ 
+    LARGEINT2X res = 1;      // Initialize result 
+    x = x % p;  // Update x if it is more than or 
+                // equal to p 
+    while (y > 0) 
+    { 
+        // If y is odd, multiply x with result 
+        if (y & 1) 
+            res = (res*x) % p; 
+  
+        // y must be even now 
+        y = y>>1; // y = y/2 
+        x = (x*x) % p; 
+    } 
+    return res; 
+} 
+  
+// This function is called for all k trials. It returns 
+// false if n is composite and returns false if n is 
+// probably prime. 
+// d is an odd number such that  d*2<sup>r</sup> = n-1 
+// for some r >= 1 
+bool DivFinderServer::millerTest(LARGEINT2X d, LARGEINT2X n) 
+{ 
+    // Pick a random number in [2..n-2] 
+    // Corner cases make sure that n > 4 
+    LARGEINT2X a = 2 + rand() % (n - 4); 
+  
+    // Compute a^d % n 
+    LARGEINT2X x = power(a, d, n); 
+  
+    if (x == 1  || x == n-1) 
+       return true; 
+  
+    // Keep squaring x while one of the following doesn't 
+    // happen 
+    // (i)   d does not reach n-1 
+    // (ii)  (x^2) % n is not 1 
+    // (iii) (x^2) % n is not n-1 
+    while (d != n-1) 
+    { 
+        x = (x * x) % n; 
+        d *= 2; 
+  
+        if (x == 1)      return false; 
+        if (x == n-1)    return true; 
+    } 
+  
+    // Return composite 
+    return false; 
+} 
+  
+// It returns false if n is composite and returns true if n 
+// is probably prime.  k is an input parameter that determines 
+// accuracy level. Higher value of k indicates more accuracy. 
+//bool isPrime(int n, int k) 
+bool DivFinderServer::isPrimeMR(LARGEINT n, int k) 
+{ 
+    std::cout << "Checking if prime: " << n << std::endl;
+    // Corner cases 
+    if (n <= 1 || n == 4)  return false; 
+    if (n <= 3) return true; 
+  
+    // Find r such that n = 2^d * r + 1 for some r >= 1 
+    LARGEINT2X d = n - 1; 
+    while (d % 2 == 0) 
+        d /= 2; 
+  
+    // Iterate given nber of 'k' times 
+    //LARGEINT2X k_256t = k;
+    for (LARGEINT2X i = 0; i < k; i++) 
+         if (!millerTest(d, n)) 
+              return false; 
+  
+    return true; 
 }

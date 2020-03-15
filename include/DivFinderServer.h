@@ -12,7 +12,7 @@
 using namespace boost::multiprecision;
 
 //number of time to run pollards rho before running the expensive prime brute force check
-const unsigned int primecheck_depth = 10;
+const unsigned int primecheck_depth = 1;
 
 /* "Unsigned int type to hold original value and calculations" */
 #define LARGEINT uint128_t
@@ -38,6 +38,7 @@ public:
     LARGEINT calcPollardsRho(LARGEINT n);
  
     bool isPrimeBF(LARGEINT n, LARGEINT& divisor);
+    bool isPrimeMR(LARGEINT n, int k); 
 
     void factorThread(LARGEINT n);
 
@@ -45,10 +46,12 @@ public:
 
     LARGEINT getPrimeDivFound() { return this->primeDivFound; };
 
+    bool millerTest(LARGEINT2X d, LARGEINT2X n);
 
 protected:
 
     LARGEINT2X modularPow(LARGEINT2X base, int exponent, LARGEINT2X modulus);
+    LARGEINT2X power(LARGEINT2X x, LARGEINT2X y, LARGEINT2X p);
     
     int verbose = 0;
 

@@ -192,8 +192,8 @@ bool TCPServer::handleConnections() {
 
          if((*tptr)->foundAllPrimeFactors) {
             auto stop = std::chrono::high_resolution_clock::now();
-            auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-            std::cout << "TIME: " << duration.count() << " microseconds\n";
+            auto duration = std::chrono::duration_cast<std::chrono::seconds>(stop - start);
+            std::cout << "TIME: " << duration.count() << " seconds\n";
             std::cout << "Sending Kill" << std::endl;
             std::list<std::unique_ptr<TCPConn>>::iterator tptr3 = _connlist.begin();
             for(; tptr3 != _connlist.end(); tptr3++) {
